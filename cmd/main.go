@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 
 	"github.com/svetlana-mel/event-task-planner/internal/config"
 	sl "github.com/svetlana-mel/event-task-planner/internal/lib/slog"
+	"github.com/svetlana-mel/event-task-planner/internal/models"
 	"github.com/svetlana-mel/event-task-planner/internal/repository/postgres"
 )
 
@@ -29,8 +31,30 @@ func main() {
 		log.Error("failed to init storage", sl.AddErrorAtribute(err))
 		os.Exit(1)
 	}
+	defer storage.Close()
 
-	_ = storage
+	userID, err := storage.CreateTmpUser(ctx)
+	if err != nil {
+		log.Error("failed to create user", sl.AddErrorAtribute(err))
+		os.Exit(1)
+	}
+
+	err = storage.CreateTask(ctx, models.Task{
+		Name:     "first task",
+		FkUserID: userID,
+	})
+	if err != nil {
+		log.Error("failed to create task", sl.AddErrorAtribute(err))
+		os.Exit(1)
+	}
+
+	tasks, err := storage.GetAllTasks(ctx, "any")
+	if err != nil {
+		log.Error("failed to get all task", sl.AddErrorAtribute(err))
+		os.Exit(1)
+	}
+
+	fmt.Println(tasks)
 }
 
 func setupLogger(env string) *slog.Logger {

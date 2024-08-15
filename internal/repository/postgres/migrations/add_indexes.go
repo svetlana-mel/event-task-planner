@@ -1,4 +1,4 @@
-package sql
+package migrations
 
 const AddIndexesStmt = `
 CREATE INDEX IF NOT EXISTS idx_tasks_event ON task(fk_event_id);

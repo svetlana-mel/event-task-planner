@@ -3,10 +3,12 @@ package models
 import "time"
 
 type Event struct {
-	eventID  uint64
-	name     string
-	dateTime time.Time
-	canceled bool
-	deleted  bool
-	fkUserID uint64
+	EventID  uint64
+	Name     string
+	DateTime time.Time
+	FkUserID uint64
+
+	// pointer types uses for fields that can be NULL
+	CanceledAt *time.Time
+	DeletedAt  *time.Time
 }

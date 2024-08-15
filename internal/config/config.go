@@ -24,7 +24,7 @@ type HTTPServer struct {
 
 type DataBase struct {
 	Type     string `yaml:"type" env-default:"postgres"`
-	Name     string `yaml:"name" env-default:"planner"`
+	Name     string `yaml:"name"`
 	Address  string `yaml:"address"`
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
@@ -43,6 +43,7 @@ func NewConfig(env string) *Config {
 	addr := os.Getenv("DATABASE_ADDRESS")
 	pwd := os.Getenv("DATABASE_PASSWORD")
 	dbUser := os.Getenv("DATABASE_USERNAME")
+	dbName := os.Getenv("DATABASE_NAME")
 
 	// check if file exists
 	_, err := os.Stat(configPath)
@@ -61,6 +62,7 @@ func NewConfig(env string) *Config {
 	config.DataBase.Address = addr
 	config.DataBase.Username = dbUser
 	config.DataBase.Password = pwd
+	config.DataBase.Name = dbName
 
 	return &config
 }
