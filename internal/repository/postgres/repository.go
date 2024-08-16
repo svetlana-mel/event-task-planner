@@ -18,7 +18,7 @@ type repository struct {
 }
 
 func (r *repository) Close() {
-	defer r.pool.Close()
+	r.pool.Close()
 }
 
 func NewRepository(ctx context.Context, cfg config.DataBase) (*repository, error) {
@@ -30,8 +30,6 @@ func NewRepository(ctx context.Context, cfg config.DataBase) (*repository, error
 		cfg.Address,
 		cfg.Name,
 	)
-
-	fmt.Println(databaseUrl)
 
 	dbpool, err := pgxpool.New(ctx, databaseUrl)
 	if err != nil {
