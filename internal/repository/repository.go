@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	ErrTaskNotExists = errors.New("task not exists")
+	ErrTaskNotExists  = errors.New("task not exists")
+	ErrEventNotExists = errors.New("event not exists")
 )
 
 type PlannerRepository interface {
@@ -18,12 +19,14 @@ type PlannerRepository interface {
 	UpdateTask(ctx context.Context, task *models.Task) error
 	SetTaskCompletionStatus(ctx context.Context, taskID uint64, completed bool) error
 	DeleteTask(ctx context.Context, taskID uint64) error
-	GetAllTasks(ctx context.Context, completed bool) ([]models.Task, error)
+	GetAllTasks(ctx context.Context, status string) ([]models.Task, error)
 
-	GetEvent(ctx context.Context, eventID uint64) (models.Event, error)
-	CreateEvent(ctx context.Context, event models.Event) error
-	UpdateEvent(ctx context.Context, event models.Event) error
-	GetAllEvents(ctx context.Context, canceled bool) ([]models.Event, error)
+	GetEvent(ctx context.Context, eventID uint64) (*models.Event, error)
+	CreateEvent(ctx context.Context, event *models.Event) error
+	UpdateEvent(ctx context.Context, event *models.Event) error
+	SetEventCanceledStatus(ctx context.Context, eventID uint64, canceled bool) error
+	DeleteEvent(ctx context.Context, eventID uint64) error
+	GetAllEvents(ctx context.Context, status string) ([]models.Event, error)
 
 	GetEventTasks(ctx context.Context, eventID uint64) ([]models.Task, error)
 	GetTodayTasks(ctx context.Context, date time.Time) ([]models.Task, error)

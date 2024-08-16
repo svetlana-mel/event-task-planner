@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS public.event
 (
     event_id bigserial NOT NULL,
     name character varying(256) NOT NULL,
+    description text,
     date_time timestamp with time zone NOT NULL,
     canceled_at timestamp with time zone,
     deleted_at timestamp with time zone,

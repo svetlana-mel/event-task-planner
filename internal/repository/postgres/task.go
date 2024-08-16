@@ -60,34 +60,6 @@ func (r *repository) CreateTask(ctx context.Context, task *models.Task) error {
 	return nil
 }
 
-func (r *repository) GetAllTasks(ctx context.Context, status string) ([]models.Task, error) {
-	op := "repository.postgres.GetAllTask"
-
-	sql := `select * from task`
-	switch status {
-	case "active":
-		sql = `select * from task where completed_at is null`
-	case "completed":
-		sql = `select * from task where completed_at is not null`
-	}
-
-	rows, err := r.pool.Query(ctx, sql)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, base.ErrTaskNotExists)
-	}
-	defer rows.Close()
-
-	tasks, err := converter.TaskRowsToModel(rows)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("%s: %w", op, base.ErrTaskNotExists)
-		}
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-
-	return tasks, nil
-}
-
 func (r *repository) UpdateTask(ctx context.Context, task *models.Task) error {
 	// function to update content fields:
 	// 		name, description, list
@@ -154,4 +126,32 @@ func (r *repository) DeleteTask(ctx context.Context, taskID uint64) error {
 	}
 
 	return nil
+}
+
+func (r *repository) GetAllTasks(ctx context.Context, status string) ([]models.Task, error) {
+	op := "repository.postgres.GetAllTasks"
+
+	sql := `select * from task`
+	switch status {
+	case "active":
+		sql = `select * from task where completed_at is null`
+	case "completed":
+		sql = `select * from task where completed_at is not null`
+	}
+
+	rows, err := r.pool.Query(ctx, sql)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, base.ErrTaskNotExists)
+	}
+	defer rows.Close()
+
+	tasks, err := converter.TaskRowsToModel(rows)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("%s: %w", op, base.ErrTaskNotExists)
+		}
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return tasks, nil
 }
