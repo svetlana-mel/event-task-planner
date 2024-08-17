@@ -14,7 +14,30 @@ import (
 
 func (r *repository) GetEvent(ctx context.Context, eventID uint64) (*models.Event, error) {
 	op := "repository.postgres.GetEvent"
-	rows, err := r.pool.Query(ctx, `select * from event where event_id=$1`, eventID)
+
+	sql := `
+	select 	e.event_id, e.name, e.description, e.date_time, e.canceled_at, 
+		e.deleted_at, e.fk_user_id, json_agg(
+            json_build_object(
+                'task_id', t.task_id, 
+                'name', t.name,
+				'description', t.description,
+				'list', t.list,
+				'start_date_time', t.start_date_time,
+				'end_date_time', t.end_date_time,
+				'fk_event_id', t.fk_event_id,
+				'completed_at', t.completed_at,
+				'deleted_at', t.deleted_at
+            )
+        ) as tasks
+	from "event" as e
+	full join "task" as t
+	on e.event_id=t.fk_event_id
+	group by e.event_id
+	having e.event_id=$1
+
+	`
+	rows, err := r.pool.Query(ctx, sql, eventID)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, base.ErrEventNotExists)
 	}

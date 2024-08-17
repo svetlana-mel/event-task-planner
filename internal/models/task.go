@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Task struct {
 	TaskID   uint64 `db:"task_id"`
@@ -21,3 +23,9 @@ type Task struct {
 	CompletedAt *time.Time `db:"completed_at"`
 	DeletedAt   *time.Time `db:"deleted_at"`
 }
+
+// func (t *Task) ToString() string {
+// 	var b strings.Builder
+// 	b.WriteString(string(t.TaskID))
+
+// }

@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/svetlana-mel/event-task-planner/internal/config"
-	"github.com/svetlana-mel/event-task-planner/internal/repository/postgres/migrations"
+	// "github.com/svetlana-mel/event-task-planner/internal/repository/postgres/migrations"
 	// base "github.com/svetlana-mel/event-task-planner/internal/repository"
 )
 
@@ -38,9 +38,11 @@ func NewRepository(ctx context.Context, cfg config.DataBase) (*repository, error
 
 	// prepare and execute statements
 	sqlFilesPath := [][2]string{
-		{"drop", migrations.DropTablesStmt},
-		{"create", migrations.CreateTablesStmt},
-		{"indexes", migrations.AddIndexesStmt},
+		// {"drop", migrations.DropTablesStmt},
+		// {"create", migrations.CreateTablesStmt},
+		// {"truncate", migrations.TruncateTablesStmt},
+		// {"indexes", migrations.AddIndexesStmt},
+		// {"fill tables with test data", migrations.FillTablesWithTestDataStmt},
 	}
 
 	for _, mig := range sqlFilesPath {

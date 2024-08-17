@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Event struct {
 	EventID  uint64 `db:"event_id"`
@@ -10,6 +12,7 @@ type Event struct {
 	Name        string    `db:"name"`
 	Description string    `db:"description"`
 	DateTime    time.Time `db:"date_time"`
+	Tasks       []Task    `db:"tasks"`
 
 	// pointer types uses for fields that can be NULL
 	CanceledAt *time.Time `db:"canceled_at"`
