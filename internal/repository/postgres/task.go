@@ -137,6 +137,8 @@ func (r *repository) GetAllTasks(ctx context.Context, status string) ([]models.T
 		sql = `select * from task where completed_at is null`
 	case "completed":
 		sql = `select * from task where completed_at is not null`
+	case "unassigned":
+		sql = `select * from task where event_id is null`
 	}
 
 	rows, err := r.pool.Query(ctx, sql)
