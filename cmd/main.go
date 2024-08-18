@@ -32,14 +32,13 @@ func main() {
 	}
 	defer storage.Close()
 
-	event, err := storage.GetEvent(ctx, 1)
+	events, err := storage.GetAllEvents(ctx, "all")
 	if err != nil {
 		log.Error("failed to get event", sl.AddErrorAtribute(err))
 		os.Exit(1)
 	}
 
-	fmt.Println(event.Tasks)
-	fmt.Println(event.Tasks[0])
+	fmt.Println(events)
 
 	// log.Info("user created")
 

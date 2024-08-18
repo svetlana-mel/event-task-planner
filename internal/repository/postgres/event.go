@@ -16,43 +16,33 @@ func (r *repository) GetEvent(ctx context.Context, eventID uint64) (*models.Even
 	op := "repository.postgres.GetEvent"
 
 	sql := `
-	select 	e.event_id, e.name, e.description, e.date_time, e.canceled_at, 
-		e.deleted_at, e.fk_user_id, json_agg(
-            json_build_object(
-                'task_id', t.task_id, 
-                'name', t.name,
-				'description', t.description,
-				'list', t.list,
-				'start_date_time', t.start_date_time,
-				'end_date_time', t.end_date_time,
-				'fk_event_id', t.fk_event_id,
-				'completed_at', t.completed_at,
-				'deleted_at', t.deleted_at
-            )
-        ) as tasks
-	from "event" as e
-	full join "task" as t
-	on e.event_id=t.fk_event_id
-	group by e.event_id
-	having e.event_id=$1
+	SELECT e.*, COALESCE(json_agg(
+               json_build_object(
+                   'task_id', t.task_id, 
+                   'name', t.name,
+                   'description', t.description,
+                   'list', t.list,
+                   'start_date_time', t.start_date_time,
+                   'end_date_time', t.end_date_time,
+                   'fk_event_id', t.fk_event_id,
+                   'completed_at', t.completed_at,
+                   'deleted_at', t.deleted_at,
+                   'fk_user_id', t.fk_user_id
+               )
+           ), '[]') as tasks
+    FROM "event" as e
+    LEFT JOIN "task" as t ON e.event_id = t.fk_event_id
+	WHERE e.event_id=$1
+    GROUP BY e.event_id
 
 	`
-	rows, err := r.pool.Query(ctx, sql, eventID)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, base.ErrEventNotExists)
-	}
-	defer rows.Close()
-
-	events, err := converter.EventRowsToModel(rows)
+	rows, _ := r.pool.Query(ctx, sql, eventID)
+	event, err := pgx.CollectExactlyOneRow(rows, converter.EventRowToModel)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	if len(events) == 0 {
-		return nil, fmt.Errorf("%s: %w", op, base.ErrEventNotExists)
-	}
-
-	return &events[0], nil
+	return &event, nil
 }
 
 func (r *repository) CreateEvent(ctx context.Context, event *models.Event) error {
@@ -141,13 +131,34 @@ func (r *repository) DeleteEvent(ctx context.Context, eventID uint64) error {
 func (r *repository) GetAllEvents(ctx context.Context, status string) ([]models.Event, error) {
 	op := "repository.postgres.GetAllEvents"
 
-	sql := `select * from event`
+	completedFilter := ""
+
 	switch status {
 	case "active":
-		sql = `select * from event where canceled_at is null`
+		completedFilter = "AND canceled_at IS NULL"
 	case "completed":
-		sql = `select * from event where canceled_at is not null`
+		completedFilter = "AND canceled_at IS NOT NULL"
 	}
+
+	sql := fmt.Sprintf(`
+	SELECT e.*, COALESCE(json_agg(
+			json_build_object(
+				'task_id', t.task_id, 
+				'name', t.name,
+				'description', t.description,
+				'list', t.list,
+				'start_date_time', t.start_date_time,
+				'end_date_time', t.end_date_time,
+				'fk_event_id', t.fk_event_id,
+				'completed_at', t.completed_at,
+				'deleted_at', t.deleted_at,
+				'fk_user_id', t.fk_user_id
+			)
+		), '[]') as tasks
+    FROM "event" as e
+    LEFT JOIN "task" as t ON e.event_id = t.fk_event_id
+	WHERE e.deleted_at IS NULL %s
+    GROUP BY e.event_id`, completedFilter)
 
 	rows, err := r.pool.Query(ctx, sql)
 	if err != nil {
@@ -155,7 +166,7 @@ func (r *repository) GetAllEvents(ctx context.Context, status string) ([]models.
 	}
 	defer rows.Close()
 
-	events, err := converter.EventRowsToModel(rows)
+	events, err := converter.EventsRowsToModel(rows)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("%s: %w", op, base.ErrEventNotExists)
