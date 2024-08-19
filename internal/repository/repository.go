@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/svetlana-mel/event-task-planner/internal/models"
 )
@@ -28,9 +27,8 @@ type PlannerRepository interface {
 	DeleteEvent(ctx context.Context, eventID uint64) error
 	GetAllEvents(ctx context.Context, status string) ([]models.Event, error)
 
-	GetEventTasks(ctx context.Context, eventID uint64) ([]models.Task, error)
-	GetTodayTasks(ctx context.Context, date time.Time) ([]models.Task, error)
-	GetTodayEvents(ctx context.Context, date time.Time) ([]models.Event, error)
+	// GetTodayTasks(ctx context.Context, date time.Time) ([]models.Task, error)
+	// GetTodayEvents(ctx context.Context, date time.Time) ([]models.Event, error)
 
 	// dev tools
 	CreateTmpUser(ctx context.Context) (uint64, error)

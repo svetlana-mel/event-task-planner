@@ -8,10 +8,10 @@ import (
 
 	"github.com/svetlana-mel/event-task-planner/internal/config"
 	// "github.com/svetlana-mel/event-task-planner/internal/repository/postgres/migrations"
-	// base "github.com/svetlana-mel/event-task-planner/internal/repository"
+	base "github.com/svetlana-mel/event-task-planner/internal/repository"
 )
 
-// var _ base.PlannerRepository = (*Repository)(nil)
+var _ base.PlannerRepository = (*repository)(nil)
 
 type repository struct {
 	pool *pgxpool.Pool
@@ -21,7 +21,7 @@ func (r *repository) Close() {
 	r.pool.Close()
 }
 
-func NewRepository(ctx context.Context, cfg config.DataBase) (*repository, error) {
+func NewRepository(ctx context.Context, cfg config.DataBase) (base.PlannerRepository, error) {
 	op := "repository.postgres.NewRepository"
 
 	databaseUrl := fmt.Sprintf("postgres://%s:%s@%s/%s",

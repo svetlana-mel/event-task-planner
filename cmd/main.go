@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log/slog"
+	"log"
 	"os"
+	"os/signal"
 
-	"github.com/svetlana-mel/event-task-planner/internal/config"
+	"github.com/svetlana-mel/event-task-planner/internal/app"
 	sl "github.com/svetlana-mel/event-task-planner/internal/lib/slog"
-	"github.com/svetlana-mel/event-task-planner/internal/repository/postgres"
 )
 
 const (
@@ -19,26 +18,56 @@ const (
 
 func main() {
 	ctx := context.Background()
-	cfg := config.NewConfig(ENV_LOCAL)
 
-	log := setupLogger(ENV_LOCAL)
-
-	log.Info("starting event-task-planner", slog.String("env", cfg.Env))
-
-	storage, err := postgres.NewRepository(ctx, cfg.DataBase)
+	application, err := app.NewApp(ctx, ENV_LOCAL)
 	if err != nil {
-		log.Error("failed to init storage", sl.AddErrorAtribute(err))
-		os.Exit(1)
-	}
-	defer storage.Close()
-
-	events, err := storage.GetAllEvents(ctx, "all")
-	if err != nil {
-		log.Error("failed to get event", sl.AddErrorAtribute(err))
+		log.Fatalf("failed to init application: %s", err)
 		os.Exit(1)
 	}
 
-	fmt.Println(events)
+	// Implementing Graceful Shutdown
+	idleConnsClosed := make(chan struct{})
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt)
+
+		// wait for interrupt signal
+		<-sigint
+
+		// We received an interrupt signal, close db pool and shut down
+		application.Close()
+
+		close(idleConnsClosed)
+	}()
+
+	err = application.Run()
+	if err != nil {
+		application.Logger.Error("error run application", sl.AddErrorAtribute(err))
+	}
+	application.Logger.Error("server stopped")
+
+	<-idleConnsClosed
+
+	// cfg := config.NewConfig(ENV_LOCAL)
+
+	// log := setupLogger(ENV_LOCAL)
+
+	// log.Info("starting event-task-planner", slog.String("env", cfg.Env))
+
+	// storage, err := postgres.NewRepository(ctx, cfg.DataBase)
+	// if err != nil {
+	// 	log.Error("failed to init storage", sl.AddErrorAtribute(err))
+	// 	os.Exit(1)
+	// }
+	// defer storage.Close()
+
+	// events, err := storage.GetAllEvents(ctx, "all")
+	// if err != nil {
+	// 	log.Error("failed to get event", sl.AddErrorAtribute(err))
+	// 	os.Exit(1)
+	// }
+
+	// fmt.Println(events)
 
 	// log.Info("user created")
 
@@ -114,19 +143,4 @@ func main() {
 	// }
 	// log.Info("got task")
 	// fmt.Println(t3)
-}
-
-func setupLogger(env string) *slog.Logger {
-	var logger *slog.Logger
-
-	switch env {
-	case ENV_LOCAL:
-		logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	case ENV_DEV:
-		logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	case ENV_PROD:
-		logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	}
-
-	return logger
 }
