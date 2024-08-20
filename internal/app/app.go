@@ -106,11 +106,13 @@ func (a *App) initHttpServer(ctx context.Context) error {
 	cfg := a.Config.HTTPServer
 
 	eventHandler := &event.Handler{
-		Repo: a.repository,
+		Repo:   a.repository,
+		Logger: a.Logger,
 	}
 
 	taskHandler := &task.Handler{
-		Repo: a.repository,
+		Repo:   a.repository,
+		Logger: a.Logger,
 	}
 
 	router.SetupRoutes(mux, eventHandler, taskHandler)

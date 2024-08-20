@@ -1,0 +1,77 @@
+openapi: '3.0.3'
+info:
+  title: Restfull API for the event-task-planner application
+  version: '1.0'
+servers:
+  - url: https://api.server.test/v1
+paths:
+  /tasks/{task_id}:
+    get:
+      summary: Get the task object
+      description: Passes the task id, resive task object or error
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/task"
+        '404': 
+          $ref: "#/components/responses/404"
+    patch:
+      summary: Update task
+      description: "Update tasks fields like: name, description, list, start end dates"
+      responses:
+        '204':
+          $ref: "#/components/responses/blank-200"
+
+  /tasks:
+    post:
+      summary: Create new task object
+      description: Passes a task object
+      responses:
+        '200':
+          description: OK
+components:
+  responses:
+    '404':
+      description: Object(-s) not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                - OK
+                - Error
+              description:
+                type: string
+    blank-200:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                - OK
+                - Error
+
+  schemas:
+    task:
+      type: object
+      properties:
+        task_id:
+          type: integer
+        fk_user_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+
+

@@ -18,7 +18,7 @@ values
 ('read textbook', '', NULL, CURRENT_TIMESTAMP, 1, 1),
 ('finish my pet prodject', 'api for postman', NULL, CURRENT_TIMESTAMP, 1, 1),
 ('write email', 'use form from site', NULL, CURRENT_TIMESTAMP, 2, 1),
-('by a new jeans', 'black and stretchy', NULL, CURRENT_TIMESTAMP, NULL, 1);
+('by a new jeans', 'black and stretchy', NULL, CURRENT_TIMESTAMP, 0, 1);
 
 END;
 `

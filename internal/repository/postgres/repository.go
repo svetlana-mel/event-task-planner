@@ -7,6 +7,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/svetlana-mel/event-task-planner/internal/config"
+	"github.com/svetlana-mel/event-task-planner/internal/repository/postgres/migrations"
+
 	// "github.com/svetlana-mel/event-task-planner/internal/repository/postgres/migrations"
 	base "github.com/svetlana-mel/event-task-planner/internal/repository"
 )
@@ -19,6 +21,14 @@ type repository struct {
 
 func (r *repository) Close() {
 	r.pool.Close()
+}
+
+func (r *repository) GetDefaultEventID(ctx context.Context) uint64 {
+	return 0
+}
+
+func (r *repository) GetDefaultUserID(ctx context.Context) uint64 {
+	return 0
 }
 
 func NewRepository(ctx context.Context, cfg config.DataBase) (base.PlannerRepository, error) {
@@ -38,11 +48,12 @@ func NewRepository(ctx context.Context, cfg config.DataBase) (base.PlannerReposi
 
 	// prepare and execute statements
 	sqlFilesPath := [][2]string{
-		// {"drop", migrations.DropTablesStmt},
-		// {"create", migrations.CreateTablesStmt},
-		// {"truncate", migrations.TruncateTablesStmt},
-		// {"indexes", migrations.AddIndexesStmt},
-		// {"fill tables with test data", migrations.FillTablesWithTestDataStmt},
+		{"drop tables", migrations.DropTablesStmt},
+		{"create tables", migrations.CreateTablesStmt},
+		{"truncate tables", migrations.TruncateTablesStmt},
+		{"add columns indexes", migrations.AddIndexesStmt},
+		{"create default user and event with 0 id", migrations.CreateBlankUserAndEvent},
+		{"fill tables with test data", migrations.FillTablesWithTestDataStmt},
 	}
 
 	for _, mig := range sqlFilesPath {

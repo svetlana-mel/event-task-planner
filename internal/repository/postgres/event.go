@@ -34,9 +34,9 @@ func (r *repository) GetEvent(ctx context.Context, eventID uint64) (*models.Even
     LEFT JOIN "task" as t ON e.event_id = t.fk_event_id
 	WHERE e.event_id=$1
     GROUP BY e.event_id
-
+	HAVING e.fk_user_id = $2 OR e.fk_user_id IS NULL
 	`
-	rows, _ := r.pool.Query(ctx, sql, eventID)
+	rows, _ := r.pool.Query(ctx, sql, eventID, 1)
 	event, err := pgx.CollectExactlyOneRow(rows, converter.EventRowToModel)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -158,9 +158,11 @@ func (r *repository) GetAllEvents(ctx context.Context, status string) ([]models.
     FROM "event" as e
     LEFT JOIN "task" as t ON e.event_id = t.fk_event_id
 	WHERE e.deleted_at IS NULL %s
-    GROUP BY e.event_id`, completedFilter)
+    GROUP BY e.event_id
+	HAVING e.fk_user_id = $1 OR e.fk_user_id IS NULL
+	`, completedFilter)
 
-	rows, err := r.pool.Query(ctx, sql)
+	rows, err := r.pool.Query(ctx, sql, 1)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, base.ErrEventNotExists)
 	}

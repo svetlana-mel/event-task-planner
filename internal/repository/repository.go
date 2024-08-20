@@ -30,6 +30,10 @@ type PlannerRepository interface {
 	// GetTodayTasks(ctx context.Context, date time.Time) ([]models.Task, error)
 	// GetTodayEvents(ctx context.Context, date time.Time) ([]models.Event, error)
 
+	// methods to manage event placeholder for tasks without a referenced event
+	GetDefaultEventID(ctx context.Context) uint64
+	GetDefaultUserID(ctx context.Context) uint64
+
 	// dev tools
 	CreateTmpUser(ctx context.Context) (uint64, error)
 

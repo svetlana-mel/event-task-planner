@@ -35,6 +35,10 @@ func (r *repository) GetTask(ctx context.Context, taskID uint64) (*models.Task, 
 func (r *repository) CreateTask(ctx context.Context, task *models.Task) error {
 	op := "repository.postgres.CreateTask"
 
+	if task.FkEventID == nil {
+		*task.FkEventID = r.GetDefaultEventID(ctx)
+	}
+
 	_, err := r.pool.Exec(ctx,
 		`insert into "task" 
 		(name, description, list, start_date_time, 
@@ -42,7 +46,7 @@ func (r *repository) CreateTask(ctx context.Context, task *models.Task) error {
 		values 
 		(	$1, $2, $3, $4,
 			nullif($5, to_timestamp(0)), 
-			nullif($6, 0), $7
+			$6, $7
 		)`,
 		task.Name,
 		task.Description,
@@ -131,17 +135,15 @@ func (r *repository) DeleteTask(ctx context.Context, taskID uint64) error {
 func (r *repository) GetAllTasks(ctx context.Context, status string) ([]models.Task, error) {
 	op := "repository.postgres.GetAllTasks"
 
-	sql := `select * from task`
+	sql := `select * from task where fk_user_id = $1`
 	switch status {
 	case "active":
-		sql = `select * from task where completed_at is null`
+		sql = `select * from task where completed_at is null and fk_user_id = $1`
 	case "completed":
-		sql = `select * from task where completed_at is not null`
-	case "unassigned":
-		sql = `select * from task where event_id is null`
+		sql = `select * from task where completed_at is not null  nd fk_user_id = $1`
 	}
 
-	rows, err := r.pool.Query(ctx, sql)
+	rows, err := r.pool.Query(ctx, sql, 1)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, base.ErrTaskNotExists)
 	}
