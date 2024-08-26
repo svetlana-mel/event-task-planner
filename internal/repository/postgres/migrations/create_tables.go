@@ -1,18 +1,14 @@
 package migrations
 
 const CreateTablesStmt = `
-CREATE TABLE IF NOT EXISTS public.user
+CREATE TABLE IF NOT EXISTS public."user"
 (
     user_id bigserial NOT NULL,
     name character varying(255) NOT NULL,
     email character varying(255) NOT NULL,
-    password character varying(255) NOT NULL,
+    pass_hash character varying(255) NOT NULL,
     created_date_time timestamp with time zone NOT NULL,
-    updated_date_time timestamp with time zone NOT NULL,
-    last_login timestamp with time zone NOT NULL,
-    refresh_token character varying(512),
-    refresh_token_expiry timestamp with time zone,
-    PRIMARY KEY (user_id)
+    CONSTRAINT email_unique UNIQUE (email)
 );
 
 CREATE TABLE IF NOT EXISTS public.event

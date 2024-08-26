@@ -4,8 +4,8 @@ const FillTablesWithTestDataStmt = `
 BEGIN;
 
 -- create test user with user_id=1
-insert into "user" (name, email, password, created_date_time, updated_date_time, last_login) 
-values ('Ivan', 'sample@mail.com', 'dfasfsdf', to_timestamp(0), to_timestamp(0), to_timestamp(0));
+insert into "user" (name, email, pass_hash, created_date_time) 
+values ('Ivan', 'sample@mail.com', 'dfasfsdf', to_timestamp(0));
 
 insert into "event" (name, description, date_time, fk_user_id)
 values

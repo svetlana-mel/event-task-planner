@@ -8,11 +8,14 @@ import (
 )
 
 var (
-	ErrTaskNotExists  = errors.New("task not exists")
-	ErrEventNotExists = errors.New("event not exists")
+	ErrTaskNotExists     = errors.New("task not exists")
+	ErrEventNotExists    = errors.New("event not exists")
+	ErrUserNotExists     = errors.New("user not exists")
+	ErrUserAlreadyExists = errors.New("user already exists")
 )
 
 type PlannerRepository interface {
+	// tasks crud
 	GetTask(ctx context.Context, taskID uint64) (*models.Task, error)
 	CreateTask(ctx context.Context, task *models.Task) error
 	UpdateTask(ctx context.Context, task *models.Task) error
@@ -20,6 +23,7 @@ type PlannerRepository interface {
 	DeleteTask(ctx context.Context, taskID uint64) error
 	GetAllTasks(ctx context.Context, status string) ([]models.Task, error)
 
+	// events crud
 	GetEvent(ctx context.Context, eventID uint64) (*models.Event, error)
 	CreateEvent(ctx context.Context, event *models.Event) error
 	UpdateEvent(ctx context.Context, event *models.Event) error
@@ -27,8 +31,9 @@ type PlannerRepository interface {
 	DeleteEvent(ctx context.Context, eventID uint64) error
 	GetAllEvents(ctx context.Context, status string) ([]models.Event, error)
 
-	// GetTodayTasks(ctx context.Context, date time.Time) ([]models.Task, error)
-	// GetTodayEvents(ctx context.Context, date time.Time) ([]models.Event, error)
+	// users crud
+	CreateUser(ctx context.Context, username string, email string, passHash []byte) (uint64, error)
+	GetUser(ctx context.Context, email string) (*models.User, error)
 
 	// methods to manage event placeholder for tasks without a referenced event
 	GetDefaultEventID(ctx context.Context) uint64
