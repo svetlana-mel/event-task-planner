@@ -16,6 +16,7 @@ import (
 	"github.com/svetlana-mel/event-task-planner/internal/repository/postgres"
 	"github.com/svetlana-mel/event-task-planner/internal/server/handlers/event"
 	"github.com/svetlana-mel/event-task-planner/internal/server/handlers/task"
+	auth_middleware "github.com/svetlana-mel/event-task-planner/internal/server/middleware"
 	"github.com/svetlana-mel/event-task-planner/internal/server/router"
 )
 
@@ -102,6 +103,7 @@ func (a *App) initHttpServer(ctx context.Context) error {
 	mux.Use(middleware.Logger)
 	mux.Use(middleware.Recoverer)
 	mux.Use(middleware.URLFormat)
+	mux.Use(auth_middleware.New(a.Config.JwtSecret, a.Logger))
 
 	cfg := a.Config.HTTPServer
 

@@ -14,6 +14,7 @@ import (
 
 	"github.com/svetlana-mel/event-task-planner/internal/models"
 	"github.com/svetlana-mel/event-task-planner/internal/repository"
+	"github.com/svetlana-mel/event-task-planner/internal/server"
 )
 
 type GetResponse struct {
@@ -30,12 +31,15 @@ type Handler struct {
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	op := "server.handlers.task.Get"
 	ctx := r.Context()
+
 	w.Header().Set("Content-Type", "application/json")
 
 	log := h.Logger.With(
 		slog.String("op", op),
 		slog.String("request_id", middleware.GetReqID(ctx)),
 	)
+
+	log.Info("auth user", slog.String("user", ctx.Value(server.UserContextKey("user")).(string)))
 
 	taskIDstr := chi.URLParam(r, "taskID")
 
