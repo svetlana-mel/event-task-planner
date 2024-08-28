@@ -46,7 +46,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	taskID, err := strconv.Atoi(taskIDstr)
 	if err != nil {
 		log.Error("error parse taskID url value", sl.AddErrorAtribute(err))
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		render.JSON(w, r, &GetResponse{
 			Status: "Error",
 			Error:  "error parse taskID, taskID is not the number",
@@ -58,7 +58,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, repository.ErrTaskNotExists) {
 			log.Error("error GetTask: task not exists", sl.AddErrorAtribute(err))
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusNotFound)
 			render.JSON(w, r, &GetResponse{
 				Status: "Error",
 				Error:  "error task not exists",
@@ -66,7 +66,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Error("error GetTask", sl.AddErrorAtribute(err))
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		render.JSON(w, r, &GetResponse{
 			Status: "Error",
 			Error:  "error getting task",
@@ -74,7 +74,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	render.JSON(w, r, &GetResponse{
 		Status: "OK",
 		Data:   task,

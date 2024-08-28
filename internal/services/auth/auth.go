@@ -15,12 +15,10 @@ import (
 	base "github.com/svetlana-mel/event-task-planner/internal/repository"
 )
 
-const TokenTTL = time.Hour * 24
-
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUserAlreadyExists  = errors.New("user with the specified email already exists")
-	ErrUserNotExists      = errors.New("user with the specified email already exists")
+	ErrUserNotExists      = errors.New("user not found")
 	ErrWrongPassword      = errors.New("wrong password")
 )
 
@@ -62,7 +60,7 @@ type UserProvider interface {
 	GetUser(ctx context.Context, email string) (*models.User, error)
 }
 
-func NewAuth(
+func New(
 	secret string,
 	log *slog.Logger,
 	userCreator UserCreator,
@@ -113,7 +111,7 @@ func (ap *authProvider) Login(
 
 	log.Info("user logged in successfully")
 
-	token, err := jwt.NewToken(user, ap.secret, TokenTTL)
+	token, err := jwt.NewToken(user, ap.secret, ap.tokenTTL)
 	if err != nil {
 		log.Error("error generate token", sl.AddErrorAtribute(err))
 		return "", fmt.Errorf("%s: %w", op, err)

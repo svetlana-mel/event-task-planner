@@ -11,8 +11,9 @@ import (
 )
 
 type Config struct {
-	Env        string `yaml:"env" env-default:"local"`
-	JwtSecret  string
+	Env        string        `yaml:"env" env-default:"local"`
+	JwtSecret  string        `yaml:"jwt_secret"`
+	JwtTTL     time.Duration `yaml:"jwt_ttl"`
 	HTTPServer `yaml:"http_server"`
 	DataBase   `yaml:"database"`
 }
@@ -41,7 +42,10 @@ func NewConfig(env string) *Config {
 
 	// get env variables
 	configPath := os.Getenv("CONFIG_PATH")
+
 	jwtSecret := os.Getenv("JWT_SECRET")
+	jwtTTLstr := os.Getenv("JWT_TTL")
+
 	addr := os.Getenv("DATABASE_ADDRESS")
 	pwd := os.Getenv("DATABASE_PASSWORD")
 	dbUser := os.Getenv("DATABASE_USERNAME")
@@ -61,7 +65,13 @@ func NewConfig(env string) *Config {
 		log.Fatalf("cannot read config: %s", err)
 	}
 
+	jwtTTL, err := time.ParseDuration(jwtTTLstr)
+	if err != nil {
+		log.Fatalf("error parse duration: %s", err)
+	}
+
 	config.JwtSecret = jwtSecret
+	config.JwtTTL = jwtTTL
 
 	config.DataBase.Address = addr
 	config.DataBase.Username = dbUser
