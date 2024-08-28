@@ -12,12 +12,17 @@ import (
 
 	"github.com/svetlana-mel/event-task-planner/internal/config"
 	sl "github.com/svetlana-mel/event-task-planner/internal/lib/slog"
+
 	"github.com/svetlana-mel/event-task-planner/internal/repository"
 	"github.com/svetlana-mel/event-task-planner/internal/repository/postgres"
+
+	"github.com/svetlana-mel/event-task-planner/internal/server/handlers/auth"
 	"github.com/svetlana-mel/event-task-planner/internal/server/handlers/event"
 	"github.com/svetlana-mel/event-task-planner/internal/server/handlers/task"
-	auth_middleware "github.com/svetlana-mel/event-task-planner/internal/server/middleware"
 	"github.com/svetlana-mel/event-task-planner/internal/server/router"
+
+	auth_middleware "github.com/svetlana-mel/event-task-planner/internal/server/middleware"
+	auth_service "github.com/svetlana-mel/event-task-planner/internal/services/auth"
 )
 
 type App struct {
@@ -103,9 +108,30 @@ func (a *App) initHttpServer(ctx context.Context) error {
 	mux.Use(middleware.Logger)
 	mux.Use(middleware.Recoverer)
 	mux.Use(middleware.URLFormat)
-	mux.Use(auth_middleware.New(a.Config.JwtSecret, a.Logger))
 
 	cfg := a.Config.HTTPServer
+
+	authService := auth_service.New(
+		a.Config.JwtSecret,
+		a.Logger,
+		a.repository,
+		a.repository,
+		a.Config.JwtTTL,
+	)
+
+	authHandler := &auth.Handler{
+		Auth:   authService,
+		Logger: a.Logger,
+	}
+
+	mux.Group(func(r chi.Router) {
+		// r.Use(middleware.RequestID)
+		// r.Use(middleware.Logger)
+		// r.Use(middleware.Recoverer)
+		// r.Use(middleware.URLFormat)
+		r.Post("/login", authHandler.Login)
+		// mux.Post("/signup", authHandler.Signup)
+	})
 
 	eventHandler := &event.Handler{
 		Repo:   a.repository,
@@ -117,7 +143,16 @@ func (a *App) initHttpServer(ctx context.Context) error {
 		Logger: a.Logger,
 	}
 
-	router.SetupRoutes(mux, eventHandler, taskHandler)
+	mux.Group(func(r chi.Router) {
+		// r.Use(middleware.RequestID)
+		// r.Use(middleware.Logger)
+		// r.Use(middleware.Recoverer)
+		// r.Use(middleware.URLFormat)
+		// middleware that verifies the token used only for product endpoints
+		r.Use(auth_middleware.New(a.Config.JwtSecret, a.Logger))
+
+		router.SetupRoutes(r, eventHandler, taskHandler, authHandler)
+	})
 
 	srv := http.Server{
 		Addr:         cfg.Address,
