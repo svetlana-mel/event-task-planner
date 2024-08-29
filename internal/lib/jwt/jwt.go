@@ -15,12 +15,12 @@ var (
 	ErrTokenExpired = errors.New("token expired")
 )
 
-func NewToken(user *models.User, jwtSecret string, duration time.Duration) (string, error) {
+func NewToken(userID uint64, email string, jwtSecret string, duration time.Duration) (string, error) {
 	token := jwt.New(jwt.SigningMethodES256)
 
 	claims := token.Claims.(jwt.MapClaims)
-	claims["uid"] = user.UserID
-	claims["email"] = user.Email
+	claims["uid"] = userID
+	claims["email"] = email
 	claims["expiration"] = time.Now().Add(duration).Unix()
 
 	tokenStr, err := token.SignedString([]byte(jwtSecret))

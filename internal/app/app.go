@@ -125,12 +125,8 @@ func (a *App) initHttpServer(ctx context.Context) error {
 	}
 
 	mux.Group(func(r chi.Router) {
-		// r.Use(middleware.RequestID)
-		// r.Use(middleware.Logger)
-		// r.Use(middleware.Recoverer)
-		// r.Use(middleware.URLFormat)
 		r.Post("/login", authHandler.Login)
-		// mux.Post("/signup", authHandler.Signup)
+		r.Post("/signup", authHandler.Signup)
 	})
 
 	eventHandler := &event.Handler{
@@ -144,10 +140,6 @@ func (a *App) initHttpServer(ctx context.Context) error {
 	}
 
 	mux.Group(func(r chi.Router) {
-		// r.Use(middleware.RequestID)
-		// r.Use(middleware.Logger)
-		// r.Use(middleware.Recoverer)
-		// r.Use(middleware.URLFormat)
 		// middleware that verifies the token used only for product endpoints
 		r.Use(auth_middleware.New(a.Config.JwtSecret, a.Logger))
 

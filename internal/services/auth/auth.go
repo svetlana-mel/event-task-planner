@@ -36,7 +36,7 @@ type Auth interface {
 		username string,
 		email string,
 		password string,
-	) (userID uint64, err error)
+	) (userID uint64, token string, err error)
 }
 
 type authProvider struct {
@@ -111,7 +111,7 @@ func (ap *authProvider) Login(
 
 	log.Info("user logged in successfully")
 
-	token, err := jwt.NewToken(user, ap.secret, ap.tokenTTL)
+	token, err := jwt.NewToken(user.UserID, user.Email, ap.secret, ap.tokenTTL)
 	if err != nil {
 		log.Error("error generate token", sl.AddErrorAtribute(err))
 		return "", fmt.Errorf("%s: %w", op, err)
@@ -127,7 +127,7 @@ func (ap *authProvider) SignUp(
 	username string,
 	email string,
 	password string,
-) (userID uint64, err error) {
+) (uint64, string, error) {
 	const op = "services.auth.Signup"
 
 	log := ap.log.With(
@@ -137,19 +137,25 @@ func (ap *authProvider) SignUp(
 
 	passHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return 0, fmt.Errorf("%s: %w", op, err)
+		return 0, "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	id, err := ap.userCreator.CreateUser(ctx, username, email, passHash)
 	if err != nil {
 		if errors.Is(err, base.ErrUserAlreadyExists) {
 			log.Info("user already exists")
-			return 0, fmt.Errorf("%s: %w", op, ErrUserAlreadyExists)
+			return 0, "", ErrUserAlreadyExists
 		}
-		return 0, fmt.Errorf("%s: %w", op, err)
+		return 0, "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	log.Info("signup successfully")
 
-	return id, nil
+	token, err := jwt.NewToken(id, email, ap.secret, ap.tokenTTL)
+	if err != nil {
+		log.Error("error generate token", sl.AddErrorAtribute(err))
+		return 0, "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	return id, token, nil
 }
