@@ -1,6 +1,3 @@
-package migrations
-
-const CreateTablesStmt = `
 BEGIN;
 
 
@@ -69,4 +66,3 @@ ALTER TABLE IF EXISTS public.task
     NOT VALID;
 
 END;
-`

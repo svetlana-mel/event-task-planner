@@ -14,6 +14,7 @@ import (
 
 	"github.com/svetlana-mel/event-task-planner/internal/models"
 	"github.com/svetlana-mel/event-task-planner/internal/repository"
+	"github.com/svetlana-mel/event-task-planner/internal/server"
 )
 
 type GetResponse struct {
@@ -30,6 +31,7 @@ type Handler struct {
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	op := "server.handlers.task.Get"
 	ctx := r.Context()
+
 	w.Header().Set("Content-Type", "application/json")
 
 	log := h.Logger.With(
@@ -37,12 +39,14 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		slog.String("request_id", middleware.GetReqID(ctx)),
 	)
 
+	log.Info("auth user", slog.String("user", ctx.Value(server.UserContextKey("user")).(string)))
+
 	taskIDstr := chi.URLParam(r, "taskID")
 
 	taskID, err := strconv.Atoi(taskIDstr)
 	if err != nil {
 		log.Error("error parse taskID url value", sl.AddErrorAtribute(err))
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 		render.JSON(w, r, &GetResponse{
 			Status: "Error",
 			Error:  "error parse taskID, taskID is not the number",
@@ -54,7 +58,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, repository.ErrTaskNotExists) {
 			log.Error("error GetTask: task not exists", sl.AddErrorAtribute(err))
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusNotFound)
 			render.JSON(w, r, &GetResponse{
 				Status: "Error",
 				Error:  "error task not exists",
@@ -62,7 +66,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Error("error GetTask", sl.AddErrorAtribute(err))
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		render.JSON(w, r, &GetResponse{
 			Status: "Error",
 			Error:  "error getting task",
@@ -70,7 +74,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	render.JSON(w, r, &GetResponse{
 		Status: "OK",
 		Data:   task,

@@ -31,7 +31,7 @@ func (r *repository) GetDefaultUserID(ctx context.Context) uint64 {
 	return 0
 }
 
-func NewRepository(ctx context.Context, cfg config.DataBase) (base.PlannerRepository, error) {
+func NewRepository(ctx context.Context, cfg config.DataBase) (*repository, error) {
 	op := "repository.postgres.NewRepository"
 
 	databaseUrl := fmt.Sprintf("postgres://%s:%s@%s/%s",

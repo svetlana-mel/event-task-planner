@@ -2,11 +2,20 @@ package router
 
 import (
 	"github.com/go-chi/chi/v5"
+	"github.com/svetlana-mel/event-task-planner/internal/server/handlers/auth"
 	"github.com/svetlana-mel/event-task-planner/internal/server/handlers/event"
 	"github.com/svetlana-mel/event-task-planner/internal/server/handlers/task"
 )
 
-func SetupRoutes(r *chi.Mux, eventHandler *event.Handler, taskHandler *task.Handler) {
+// SetupRoutes setup data routes
+// do not setup login and signup routes
+func SetupRoutes(
+	r chi.Router,
+	eventHandler *event.Handler,
+	taskHandler *task.Handler,
+	authHandler *auth.Handler,
+) {
+
 	r.Route("/tasks", func(r chi.Router) {
 		// r.Post("/", taskHandler.Create)
 		// r.Get("/", taskHandler.GetAll)

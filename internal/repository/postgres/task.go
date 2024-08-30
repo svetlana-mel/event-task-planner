@@ -14,6 +14,7 @@ import (
 
 func (r *repository) GetTask(ctx context.Context, taskID uint64) (*models.Task, error) {
 	op := "repository.postgres.GetTask"
+
 	rows, err := r.pool.Query(ctx, `select * from task where task_id=$1`, taskID)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, base.ErrTaskNotExists)

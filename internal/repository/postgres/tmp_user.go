@@ -8,17 +8,16 @@ import (
 	"github.com/svetlana-mel/event-task-planner/internal/models"
 )
 
-// пока нет сервиса авторизации,
+// CreateTmpUser: пока нет сервиса авторизации,
 // создаем временного пользователя
 // получаем его id и далее с id тестируем разрабатываемый функционал
-
 func (r *repository) CreateTmpUser(ctx context.Context) (uint64, error) {
 	op := "repository.postgres.CreateTmpUser"
 
 	user := models.User{
 		Name:     "tmp user",
 		Email:    "some.email@mail.com",
-		Password: "my=passw",
+		PassHash: []byte("my=passw"),
 	}
 
 	timeNow := time.Now().Local().UTC()
@@ -26,10 +25,10 @@ func (r *repository) CreateTmpUser(ctx context.Context) (uint64, error) {
 
 	_, err := r.pool.Exec(ctx,
 		`insert into "user" 
-		(name, email, password, created_date_time, updated_date_time, last_login)
+		(name, email, pass_hash, created_date_time)
 		values 
-		($1, $2, $3, $4, $5, $6)`,
-		user.Name, user.Email, user.Password, timeNow, timeNow, timeNow,
+		($1, $2, $3, $4)`,
+		user.Name, user.Email, user.PassHash, timeNow,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
