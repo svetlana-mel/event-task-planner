@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"log"
 	"log/slog"
@@ -11,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/svetlana-mel/event-task-planner/internal/config"
+	"github.com/svetlana-mel/event-task-planner/internal/lib/jwt"
 	sl "github.com/svetlana-mel/event-task-planner/internal/lib/slog"
 
 	"github.com/svetlana-mel/event-task-planner/internal/repository"
@@ -25,10 +27,17 @@ import (
 	auth_service "github.com/svetlana-mel/event-task-planner/internal/services/auth"
 )
 
+type Keys struct {
+	Public  *ecdsa.PublicKey
+	Private *ecdsa.PrivateKey
+}
+
 type App struct {
 	Env string
 
 	Config *config.Config
+
+	JWTKeys Keys
 
 	Logger *slog.Logger
 
@@ -61,6 +70,7 @@ func (a *App) initDependencies(ctx context.Context) error {
 	inits := []func(context.Context) error{
 		a.initConfig,
 		a.initLogger,
+		a.initJwtKeys,
 		a.initRepository,
 		a.initHttpServer,
 	}
@@ -84,6 +94,25 @@ func (a *App) initConfig(ctx context.Context) error {
 func (a *App) initLogger(ctx context.Context) error {
 	log := sl.SetupLogger(a.Config.Env)
 	a.Logger = log
+	return nil
+}
+
+func (a *App) initJwtKeys(_ context.Context) error {
+	publicKey, err := jwt.LoadPublicKey(a.Config.PublicKeyPath)
+	if err != nil {
+		a.Logger.Error("failed to init JWTKeys: %w", sl.AddErrorAtribute(err))
+		return err
+	}
+
+	privateKey, err := jwt.LoadPrivateKey(a.Config.PrivateKeyPath)
+	if err != nil {
+		a.Logger.Error("failed to init JWTKeys: %w", sl.AddErrorAtribute(err))
+		return err
+	}
+
+	a.JWTKeys.Public = publicKey
+	a.JWTKeys.Private = privateKey
+
 	return nil
 }
 
@@ -112,7 +141,7 @@ func (a *App) initHttpServer(ctx context.Context) error {
 	cfg := a.Config.HTTPServer
 
 	authService := auth_service.New(
-		a.Config.JwtSecret,
+		a.JWTKeys.Private,
 		a.Logger,
 		a.repository,
 		a.repository,
@@ -141,7 +170,7 @@ func (a *App) initHttpServer(ctx context.Context) error {
 
 	mux.Group(func(r chi.Router) {
 		// middleware that verifies the token used only for product endpoints
-		r.Use(auth_middleware.New(a.Config.JwtSecret, a.Logger))
+		r.Use(auth_middleware.New(a.JWTKeys.Public, a.Logger))
 
 		router.SetupRoutes(r, eventHandler, taskHandler, authHandler)
 	})

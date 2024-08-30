@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -40,7 +41,7 @@ type Auth interface {
 }
 
 type authProvider struct {
-	secret      string
+	privateKey  *ecdsa.PrivateKey
 	log         *slog.Logger
 	userCreator UserCreator
 	usrProvider UserProvider
@@ -61,7 +62,7 @@ type UserProvider interface {
 }
 
 func New(
-	secret string,
+	privateKey *ecdsa.PrivateKey,
 	log *slog.Logger,
 	userCreator UserCreator,
 	userProvider UserProvider,
@@ -72,7 +73,7 @@ func New(
 		usrProvider: userProvider,
 		log:         log,
 		tokenTTL:    tokenTTL,
-		secret:      secret,
+		privateKey:  privateKey,
 	}
 }
 
@@ -111,7 +112,7 @@ func (ap *authProvider) Login(
 
 	log.Info("user logged in successfully")
 
-	token, err := jwt.NewToken(user.UserID, user.Email, ap.secret, ap.tokenTTL)
+	token, err := jwt.NewToken(user.UserID, user.Email, ap.privateKey, ap.tokenTTL)
 	if err != nil {
 		log.Error("error generate token", sl.AddErrorAtribute(err))
 		return "", fmt.Errorf("%s: %w", op, err)
@@ -151,7 +152,7 @@ func (ap *authProvider) SignUp(
 
 	log.Info("signup successfully")
 
-	token, err := jwt.NewToken(id, email, ap.secret, ap.tokenTTL)
+	token, err := jwt.NewToken(id, email, ap.privateKey, ap.tokenTTL)
 	if err != nil {
 		log.Error("error generate token", sl.AddErrorAtribute(err))
 		return 0, "", fmt.Errorf("%s: %w", op, err)

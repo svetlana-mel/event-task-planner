@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"strconv"
@@ -13,9 +14,10 @@ import (
 
 var (
 	ErrTokenExpired = errors.New("token expired")
+	ErrInvalidToken = errors.New("token invalid")
 )
 
-func NewToken(userID uint64, email string, jwtSecret string, duration time.Duration) (string, error) {
+func NewToken(userID uint64, email string, jwtPrivateKey *ecdsa.PrivateKey, duration time.Duration) (string, error) {
 	token := jwt.New(jwt.SigningMethodES256)
 
 	claims := token.Claims.(jwt.MapClaims)
@@ -23,7 +25,7 @@ func NewToken(userID uint64, email string, jwtSecret string, duration time.Durat
 	claims["email"] = email
 	claims["expiration"] = time.Now().Add(duration).Unix()
 
-	tokenStr, err := token.SignedString([]byte(jwtSecret))
+	tokenStr, err := token.SignedString(jwtPrivateKey)
 	if err != nil {
 		return "", err
 	}
@@ -31,11 +33,24 @@ func NewToken(userID uint64, email string, jwtSecret string, duration time.Durat
 	return tokenStr, nil
 }
 
-func ValidateToken(token *jwt.Token) (*models.User, error) {
+func ValidateToken(tokenString string, jwtPublicKey *ecdsa.PublicKey) (*models.User, error) {
 	const op = "lib.jwt.ValidateToken"
 
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		signinMethod := token.Method
+		if _, ok := signinMethod.(*jwt.SigningMethodECDSA); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+
+		return jwtPublicKey, nil
+	})
+
+	if err != nil {
+		return nil, ErrInvalidToken
+	}
+
 	if !token.Valid {
-		return nil, fmt.Errorf("%s: token invalid", op)
+		return nil, ErrInvalidToken
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)

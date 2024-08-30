@@ -1,4 +1,7 @@
 env: "local" # local, dev, prod
+jwt_auth:
+  private_key_path: ./secrets/private.key
+  public_key_path: ./secrets/public.key
 http_server:
   address: "localhost:8081"
   timeout: 4s

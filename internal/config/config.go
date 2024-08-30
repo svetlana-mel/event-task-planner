@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -11,11 +10,16 @@ import (
 )
 
 type Config struct {
-	Env        string        `yaml:"env" env-default:"local"`
-	JwtSecret  string        `yaml:"jwt_secret"`
-	JwtTTL     time.Duration `yaml:"jwt_ttl"`
+	Env        string `yaml:"env" env-default:"local"`
+	JwtAuth    `yaml:"jwt_auth"`
 	HTTPServer `yaml:"http_server"`
 	DataBase   `yaml:"database"`
+}
+
+type JwtAuth struct {
+	PrivateKeyPath string        `yaml:"private_key_path" env:"PRIVATE_KEY_PATH"`
+	PublicKeyPath  string        `yaml:"public_key_path" env:"PUBLIC_KEY_PATH"`
+	JwtTTL         time.Duration `yaml:"jwt_ttl" env:"JWT_TTL"`
 }
 
 type HTTPServer struct {
@@ -25,11 +29,11 @@ type HTTPServer struct {
 }
 
 type DataBase struct {
-	Type     string `yaml:"type" env-default:"postgres"`
-	Name     string `yaml:"name"`
-	Address  string `yaml:"address"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
+	Type     string `yaml:"type" env-default:"postgres" ENV:"DATABASE_TYPE"`
+	Name     string `yaml:"name" env:"DATABASE_NAME"`
+	Address  string `yaml:"address" env:"DATABASE_ADDRESS"`
+	Username string `yaml:"username" env:"DATABASE_USERNAME"`
+	Password string `yaml:"password" env:"DATABASE_PASSWORD"`
 }
 
 func NewConfig(env string) *Config {
@@ -43,14 +47,6 @@ func NewConfig(env string) *Config {
 	// get env variables
 	configPath := os.Getenv("CONFIG_PATH")
 
-	jwtSecret := os.Getenv("JWT_SECRET")
-	jwtTTLstr := os.Getenv("JWT_TTL")
-
-	addr := os.Getenv("DATABASE_ADDRESS")
-	pwd := os.Getenv("DATABASE_PASSWORD")
-	dbUser := os.Getenv("DATABASE_USERNAME")
-	dbName := os.Getenv("DATABASE_NAME")
-
 	// check if file exists
 	_, err := os.Stat(configPath)
 	if os.IsNotExist(err) {
@@ -59,24 +55,9 @@ func NewConfig(env string) *Config {
 
 	var config Config
 
-	fmt.Println(configPath)
-
 	if err := cleanenv.ReadConfig(configPath, &config); err != nil {
 		log.Fatalf("cannot read config: %s", err)
 	}
-
-	jwtTTL, err := time.ParseDuration(jwtTTLstr)
-	if err != nil {
-		log.Fatalf("error parse duration: %s", err)
-	}
-
-	config.JwtSecret = jwtSecret
-	config.JwtTTL = jwtTTL
-
-	config.DataBase.Address = addr
-	config.DataBase.Username = dbUser
-	config.DataBase.Password = pwd
-	config.DataBase.Name = dbName
 
 	return &config
 }
